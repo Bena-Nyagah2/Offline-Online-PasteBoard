@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const emojiBtn = document.getElementById('emoji-btn');
     const emojiPicker = document.getElementById('emoji-picker');
     const characterCount = document.getElementById('character-count');
+    const replaceBtn = document.getElementById('replace-btn');
+    
 
     // App State
     let rooms = [];
@@ -584,6 +586,32 @@ function saveMessage() {
         }
         showAlert('Content refreshed!');
     }
+// Replace room text function
+    function replaceRoomText() {
+    if (!currentRoom) return;
+    
+    const username = usernameInput.value.trim() || 'Anonymous';
+    const text = sharedTextArea.value.trim();
+    
+    if (!text) {
+        showAlert('Please enter a message to save.');
+        return;
+    }
+    
+    // Save username
+    localStorage.setItem('username', username);
+    
+    // Replace all messages with a single new message
+    currentRoom.messages = [{
+        username,
+        text,
+        timestamp: new Date().toISOString()
+    }];
+    
+    updateLastPost();
+    saveAppState();
+    showAlert('Text replaced successfully!');
+}
     
     // Copy text to clipboard
     function copyToClipboard() {
@@ -771,6 +799,7 @@ function saveMessage() {
     themeToggle.addEventListener('click', toggleTheme);
     exportBtn.addEventListener('click', exportData);
     emojiBtn.addEventListener('click', toggleEmojiPicker);
+    replaceBtn.addEventListener('click', replaceRoomText);//new replace function
     
     // Close emoji picker when clicking outside
     document.addEventListener('click', function(event) {
