@@ -19,8 +19,7 @@ The application features a modern, responsive interface with both light and dark
 Clone the repository or download the source code:
 
 ```sh
-git clone https://github.com/yourusername/shared-text-rooms.git
-cd shared-text-rooms
+git clone https://github.com/Bena-Nyagah2/Offline-Online-PasteBoard
 ```
 
 Install dependencies:
