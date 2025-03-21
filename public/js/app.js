@@ -144,29 +144,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Initialize connection to server
-    function initConnection() {
-        try {
-            // Get the current hostname and use the same port as the server
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const host = window.location.hostname || 'localhost';
-            const port = window.location.port || '3000';
+    // Add this function to implement polling as a fallback
+function setupPolling() {
+    console.log('Setting up polling as fallback');
+    
+    // Clear any existing interval
+    if (window.pollingInterval) {
+        clearInterval(window.pollingInterval);
+    }
+    
+    // Poll for updates every 5 seconds
+    window.pollingInterval = setInterval(function() {
+        if (connectionMode === 'offline') {
+            console.log('Polling for updates...');
             
-            ws = new WebSocket(`${protocol}//${host}:${port}`);
-            
-            ws.onopen = function() {
-                console.log('Connected to server');
-                updateConnectionStatus('online');
-                
-                // Request initial data
-                fetchRoomsFromServer();
-            };
-            
-            ws.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                
-                if (data.type === 'init' || data.type === 'update') {
+            fetch('/api/rooms')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Received data from polling');
+                    
                     // Update rooms with server data
-                    rooms = data.data;
+                    rooms = data;
                     
                     // Update localStorage for offline fallback
                     localStorage.setItem('rooms', JSON.stringify(rooms));
@@ -181,30 +184,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Update UI
                     renderRooms();
                     loadCurrentRoom();
-                }
-            };
-            
-            ws.onclose = function() {
-                console.log('Disconnected from server');
-                
-                // Try local network mode
-                tryLocalNetworkMode();
-                
-                // Retry connection after delay
-                setTimeout(initConnection, 5000);
-            };
-            
-            ws.onerror = function(error) {
-                console.error('WebSocket error:', error);
-                
-                // Try local network mode
-                tryLocalNetworkMode();
-            };
-        } catch (error) {
-            console.error('Connection error:', error);
-            updateConnectionStatus('offline');
+                    
+                    // Try to reconnect WebSocket
+                    if (ws === null || ws.readyState === WebSocket.CLOSED) {
+                        initConnection();
+                    }
+                })
+                .catch(error => {
+                    console.error('Polling error:', error);
+                });
         }
-    }
+    }, 5000);
+}
+
+// Modify your tryLocalNetworkMode function to set up polling
+function tryLocalNetworkMode() {
+    updateConnectionStatus('offline');
+    setupPolling();
+}
+
     
     // Try to connect in local network mode
     function tryLocalNetworkMode() {
