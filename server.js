@@ -11,131 +11,7 @@ const wss = new WebSocket.Server({ server });
 // Data storage path
 const DATA_FILE = path.join(__dirname, 'rooms-data.json');
 
-// Initialize or load rooms data
-let rooms = [];
-try {
-    if (fs.existsSync(DATA_FILE)) {
-        const data = fs.readFileSync(DATA_FILE, 'utf8');
-        rooms = JSON.parse(data);
-    } else {
-        rooms = [{ id: 'default', name: 'Default Room', messages: [] }];
-        fs.writeFileSync(DATA_FILE, JSON.stringify(rooms));
-    }
-} catch (error) {
-    console.error('Error loading rooms data:', error);
-    rooms = [{ id: 'default', name: 'Default Room', messages: [] }];
-}
-
-// Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
-
-
-// WebSocket connection handling
-wss.on('connection', (ws) => {
-    console.log('Client connected');
-    
-    // Send current state to new client
-    ws.send(JSON.stringify({
-        type: 'init',
-        data: rooms
-    }));
-
-    // Handle messages from clients
-    ws.on('message', (message) => {
-        try {
-            const data = JSON.parse(message);
-            
-            if (data.type === 'update') {
-                rooms = data.data;
-                
-                // Save to file
-                fs.writeFileSync(DATA_FILE, JSON.stringify(rooms));
-                
-                // Broadcast to all clients
-                wss.clients.forEach((client) => {
-                    if (client !== ws && client.readyState === WebSocket.OPEN) {
-                        client.send(JSON.stringify({
-                            type: 'update',
-                            data: rooms
-                        }));
-                    }
-                });
-            }
-        } catch (error) {
-            console.error('Error processing message:', error);
-        }
-    });
-
-    ws.on('close', () => {
-        console.log('Client disconnected');
-    });
-});
-
-// Add these endpoints to your server.js file
-
-// Get all rooms
-app.get('/api/rooms', (req, res) => {
-    try {
-        const roomsData = loadRoomsData();
-        res.json(roomsData);
-    } catch (error) {
-        console.error('Error fetching rooms:', error);
-        res.status(500).json({ error: 'Failed to fetch rooms' });
-    }
-});
-
-// Create a new room
-app.post('/api/rooms', express.json(), (req, res) => {
-    try {
-        const roomsData = loadRoomsData();
-        roomsData.push(req.body);
-        saveRoomsData(roomsData);
-        res.status(201).json(req.body);
-    } catch (error) {
-        console.error('Error creating room:', error);
-        res.status(500).json({ error: 'Failed to create room' });
-    }
-});
-
-// Update a room
-app.put('/api/rooms/:id', express.json(), (req, res) => {
-    try {
-        const roomsData = loadRoomsData();
-        const roomIndex = roomsData.findIndex(room => room.id === req.params.id);
-        
-        if (roomIndex !== -1) {
-            roomsData[roomIndex] = req.body;
-            saveRoomsData(roomsData);
-            res.json(req.body);
-        } else {
-            res.status(404).json({ error: 'Room not found' });
-        }
-    } catch (error) {
-        console.error('Error updating room:', error);
-        res.status(500).json({ error: 'Failed to update room' });
-    }
-});
-
-// Delete a room
-app.delete('/api/rooms/:id', (req, res) => {
-    try {
-        const roomsData = loadRoomsData();
-        const roomIndex = roomsData.findIndex(room => room.id === req.params.id);
-        
-        if (roomIndex !== -1) {
-            roomsData.splice(roomIndex, 1);
-            saveRoomsData(roomsData);
-            res.json({ message: 'Room deleted successfully' });
-        } else {
-            res.status(404).json({ error: 'Room not found' });
-        }
-    } catch (error) {
-        console.error('Error deleting room:', error);
-        res.status(500).json({ error: 'Failed to delete room' });
-    }
-});
-
-// Add these helper functions at server.js file
+// Helper functions for loading and saving data
 function loadRoomsData() {
     try {
         if (fs.existsSync(DATA_FILE)) {
@@ -159,6 +35,133 @@ function saveRoomsData(data) {
         return false;
     }
 }
+
+// Initialize or load rooms data
+let rooms = loadRoomsData();
+
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+
+// WebSocket server logging
+wss.on('listening', () => {
+    console.log('WebSocket server is listening');
+});
+
+// WebSocket connection handling
+wss.on('connection', (ws, req) => {
+    console.log('Client connected from:', req.socket.remoteAddress);
+    
+    // Send current state to new client
+    ws.send(JSON.stringify({
+        type: 'init',
+        data: rooms
+    }));
+
+    // Handle messages from clients
+    ws.on('message', (message) => {
+        try {
+            const data = JSON.parse(message);
+            
+            if (data.type === 'update') {
+                rooms = data.data;
+                
+                // Save to file
+                saveRoomsData(rooms);
+                
+                // Broadcast to all clients
+                wss.clients.forEach((client) => {
+                    if (client !== ws && client.readyState === WebSocket.OPEN) {
+                        client.send(JSON.stringify({
+                            type: 'update',
+                            data: rooms
+                        }));
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error processing message:', error);
+        }
+    });
+
+    ws.on('close', () => {
+        console.log('Client disconnected');
+    });
+});
+
+// Add error handling for the WebSocket server
+wss.on('error', (error) => {
+    console.error('WebSocket server error:', error);
+});
+
+// REST API endpoints
+// Get all rooms
+app.get('/api/rooms', (req, res) => {
+    try {
+        res.json(rooms);
+    } catch (error) {
+        console.error('Error fetching rooms:', error);
+        res.status(500).json({ error: 'Failed to fetch rooms' });
+    }
+});
+
+// Create a new room
+app.post('/api/rooms', (req, res) => {
+    try {
+        rooms.push(req.body);
+        saveRoomsData(rooms);
+        res.status(201).json(req.body);
+    } catch (error) {
+        console.error('Error creating room:', error);
+        res.status(500).json({ error: 'Failed to create room' });
+    }
+});
+
+// Update a room
+app.put('/api/rooms/:id', (req, res) => {
+    try {
+        const roomIndex = rooms.findIndex(room => room.id === req.params.id);
+        
+        if (roomIndex !== -1) {
+            rooms[roomIndex] = req.body;
+            saveRoomsData(rooms);
+            res.json(req.body);
+        } else {
+            res.status(404).json({ error: 'Room not found' });
+        }
+    } catch (error) {
+        console.error('Error updating room:', error);
+        res.status(500).json({ error: 'Failed to update room' });
+    }
+});
+
+// Delete a room
+app.delete('/api/rooms/:id', (req, res) => {
+    try {
+        const roomIndex = rooms.findIndex(room => room.id === req.params.id);
+        
+        if (roomIndex !== -1) {
+            rooms.splice(roomIndex, 1);
+            saveRoomsData(rooms);
+            res.json({ message: 'Room deleted successfully' });
+        } else {
+            res.status(404).json({ error: 'Room not found' });
+        }
+    } catch (error) {
+        console.error('Error deleting room:', error);
+        res.status(500).json({ error: 'Failed to delete room' });
+    }
+});
+
+// Add a health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Add a WebSocket test endpoint
+app.get('/ws-test', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'ws-test.html'));
+});
 
 // Start server
 const PORT = process.env.PORT || 3000;
