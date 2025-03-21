@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const emojiBtn = document.getElementById('emoji-btn');
     const emojiPicker = document.getElementById('emoji-picker');
     const characterCount = document.getElementById('character-count');
+    const replaceBtn = document.getElementById('replace-btn');
+    
 
     // App State
     let rooms = [];
@@ -471,15 +473,23 @@ function tryLocalNetworkMode() {
         showAlert('Room deleted successfully!');
     }
     
-    // Load current room content
-    function loadCurrentRoom() {
-        if (!currentRoom) return;
-        
-        currentRoomName.textContent = currentRoom.name;
-        sharedTextArea.value = currentRoom.messages.map(msg => msg.text).join('\n');
-        updateLastPost();
-        updateCharacterCount();
+   // Load current room content
+function loadCurrentRoom() {
+    if (!currentRoom) return;
+    
+    currentRoomName.textContent = currentRoom.name;
+    
+    // Display only the latest message text
+    if (currentRoom.messages && currentRoom.messages.length > 0) {
+        sharedTextArea.value = currentRoom.messages[currentRoom.messages.length - 1].text;
+    } else {
+        sharedTextArea.value = '';
     }
+    
+    updateLastPost();
+    updateCharacterCount();
+}
+
     
     // Update last post information
     function updateLastPost() {
@@ -522,17 +532,34 @@ function tryLocalNetworkMode() {
         }
     }
     
-    // Save message to current room
-    function saveMessage() {
-        if (!currentRoom) return;
-        
-        const username = usernameInput.value.trim() || 'Anonymous';
-        const text = sharedTextArea.value.trim();
-        
-        if (!text) {
-            showAlert('Please enter a message to save.');
-            return;
-        }
+   // Save message to current room
+function saveMessage() {
+    if (!currentRoom) return;
+    
+    const username = usernameInput.value.trim() || 'Anonymous';
+    const text = sharedTextArea.value.trim();
+    
+    if (!text) {
+        showAlert('Please enter a message to save.');
+        return;
+    }
+    
+    // Save username
+    localStorage.setItem('username', username);
+    
+    // Replace the current room's messages with a single new message
+    // instead of appending to the existing messages
+    currentRoom.messages = [{
+        username,
+        text,
+        timestamp: new Date().toISOString()
+    }];
+    
+    updateLastPost();
+    saveAppState();
+    showAlert('Message saved successfully!');
+}
+
         
         // Save username
         localStorage.setItem('username', username);
@@ -559,6 +586,32 @@ function tryLocalNetworkMode() {
         }
         showAlert('Content refreshed!');
     }
+// Replace room text function
+    function replaceRoomText() {
+    if (!currentRoom) return;
+    
+    const username = usernameInput.value.trim() || 'Anonymous';
+    const text = sharedTextArea.value.trim();
+    
+    if (!text) {
+        showAlert('Please enter a message to save.');
+        return;
+    }
+    
+    // Save username
+    localStorage.setItem('username', username);
+    
+    // Replace all messages with a single new message
+    currentRoom.messages = [{
+        username,
+        text,
+        timestamp: new Date().toISOString()
+    }];
+    
+    updateLastPost();
+    saveAppState();
+    showAlert('Text replaced successfully!');
+}
     
     // Copy text to clipboard
     function copyToClipboard() {
@@ -746,6 +799,7 @@ function tryLocalNetworkMode() {
     themeToggle.addEventListener('click', toggleTheme);
     exportBtn.addEventListener('click', exportData);
     emojiBtn.addEventListener('click', toggleEmojiPicker);
+    replaceBtn.addEventListener('click', replaceRoomText);//new replace function
     
     // Close emoji picker when clicking outside
     document.addEventListener('click', function(event) {

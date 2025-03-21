@@ -36,6 +36,21 @@ function saveRoomsData(data) {
     }
 }
 
+function processRoomUpdate(updatedRooms) {
+    // Make a deep copy of the updated rooms
+    const processedRooms = JSON.parse(JSON.stringify(updatedRooms));
+    
+    // Process each room
+    processedRooms.forEach(room => {
+        // Ensure we only keep the latest message for each room
+        if (room.messages && room.messages.length > 1) {
+            room.messages = [room.messages[room.messages.length - 1]];
+        }
+    });
+    
+    return processedRooms;
+}
+
 // Initialize or load rooms data
 let rooms = loadRoomsData();
 
@@ -59,30 +74,32 @@ wss.on('connection', (ws, req) => {
     }));
 
     // Handle messages from clients
-    ws.on('message', (message) => {
-        try {
-            const data = JSON.parse(message);
+    // modify the WebSocket message handler:
+ws.on('message', (message) => {
+    try {
+        const data = JSON.parse(message);
+        
+        if (data.type === 'update') {
+            // Process the rooms to ensure only the latest message is kept
+            rooms = processRoomUpdate(data.data);
             
-            if (data.type === 'update') {
-                rooms = data.data;
-                
-                // Save to file
-                saveRoomsData(rooms);
-                
-                // Broadcast to all clients
-                wss.clients.forEach((client) => {
-                    if (client !== ws && client.readyState === WebSocket.OPEN) {
-                        client.send(JSON.stringify({
-                            type: 'update',
-                            data: rooms
-                        }));
-                    }
-                });
-            }
-        } catch (error) {
-            console.error('Error processing message:', error);
+            // Save to file
+            saveRoomsData(rooms);
+            
+            // Broadcast to all clients
+            wss.clients.forEach((client) => {
+                if (client !== ws && client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify({
+                        type: 'update',
+                        data: rooms
+                    }));
+                }
+            });
         }
-    });
+    } catch (error) {
+        console.error('Error processing message:', error);
+    }
+});
 
     ws.on('close', () => {
         console.log('Client disconnected');
