@@ -575,7 +575,7 @@ function saveMessage() {
         updateLastPost();
         saveAppState();
         showAlert('Message saved successfully!');
-    }
+    
     
     // Refresh the current room content
     function refreshContent() {
