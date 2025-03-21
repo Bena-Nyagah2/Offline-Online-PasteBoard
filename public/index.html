@@ -77,7 +77,21 @@
             <button id="alert-close" class="btn">OK</button>
         </div>
     </div>
+
+    <script>
+    // Debug WebSocket connection
+    console.log('Page loaded. Protocol:', window.location.protocol);
+    console.log('Hostname:', window.location.hostname);
+    console.log('Port:', window.location.port);
     
+    // Check if WebSocket is supported
+    if ('WebSocket' in window) {
+        console.log('WebSocket is supported by this browser');
+    } else {
+        console.log('WebSocket is NOT supported by this browser');
+    }
+</script>
+
     <script src="js/app.js"></script>
 </body>
 </html>
