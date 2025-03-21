@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Text Rooms</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Shared Text Rooms</h1>
+            <div class="user-info">
+                <input type="text" id="username" placeholder="Your username">
+                <div class="connection-status">
+                    <span id="status-indicator" class="offline"></span>
+                    <span id="status-text">Offline</span>
+                </div>
+                <div class="theme-toggle" id="theme-toggle">
+                    <i class="fas fa-moon theme-icon"></i>
+                    <span>Dark Mode</span>
+                </div>
+                <button id="logs-btn" class="btn"><i class="fas fa-history"></i> Logs</button>
+            </div>
+        </header>
+        
+        <div class="room-section">
+            <div class="room-header">
+                <h2>Rooms</h2>
+                <button id="create-room-btn" class="btn"><i class="fas fa-plus"></i> New Room</button>
+            </div>
+            <div class="room-list" id="room-list">
+                <!-- Rooms will be added here dynamically -->
+            </div>
+        </div>
+        
+        <div class="text-section">
+            <div class="text-header">
+                <h2 id="current-room-name">Default Room</h2>
+                <div class="last-post" id="last-post">No messages yet</div>
+            </div>
+            <div class="text-container">
+                <textarea id="shared-text" placeholder="Type your message here..."></textarea>
+                <div class="character-count" id="character-count">0 characters</div>
+                <button class="emoji-btn" id="emoji-btn">😊</button>
+                <div class="emoji-picker" id="emoji-picker">
+                    <!-- Emojis will be added here dynamically -->
+                </div>
+            </div>
+            <div class="button-group">
+                <button id="save-btn" class="btn primary"><i class="fas fa-save"></i> Save</button>
+                <button id="copy-btn" class="btn"><i class="fas fa-copy"></i> Copy</button>
+                <button id="refresh-btn" class="btn"><i class="fas fa-sync-alt"></i> Refresh</button>
+                <button id="export-btn" class="btn"><i class="fas fa-file-export"></i> Export</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Logs Modal -->
+    <div id="logs-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Message Logs</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="logs-content">
+                <!-- Logs will be displayed here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alert Modal -->
+    <div id="alert-modal" class="alert-modal">
+        <div class="alert-content">
+            <span id="alert-message"></span>
+            <button id="alert-close" class="btn">OK</button>
+        </div>
+    </div>
+    
+    <script src="js/app.js"></script>
+</body>
+</html>
