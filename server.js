@@ -29,10 +29,6 @@ try {
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API endpoint to get all rooms
-app.get('/api/rooms', (req, res) => {
-    res.json(rooms);
-});
 
 // WebSocket connection handling
 wss.on('connection', (ws) => {
