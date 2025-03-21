@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        #status {
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .connecting {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        #messages {
+            border: 1px solid #ddd;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 0.8em;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Test</h1>
+    
+    <div id="status" class="connecting">Connecting...</div>
+    
+    <h2>Connection Information</h2>
+    <pre id="connection-info"></pre>
+    
+    <h2>Messages</h2>
+    <div id="messages"></div>
+    
+    <button id="send-test">Send Test Message</button>
+    <button id="reconnect">Reconnect</button>
+    
+    <script>
+        // DOM elements
+        const statusEl = document.getElementById('status');
+        const messagesEl = document.getElementById('messages');
+        const connectionInfoEl = document.getElementById('connection-info');
+        const sendTestBtn = document.getElementById('send-test');
+        const reconnectBtn = document.getElementById('reconnect');
+        
+        // WebSocket instance
+        let ws = null;
+        
+        // Add a message to the messages container
+        function addMessage(message, type = 'info') {
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            messageEl.innerHTML = `
+                <span class="timestamp">[${timestamp}]</span>
+                ${message}
+            `;
+            
+            messagesEl.appendChild(messageEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+        
+        // Update connection info
+        function updateConnectionInfo() {
+            const info = {
+                'Page URL': window.location.href,
+                'Protocol': window.location.protocol,
+                'Hostname': window.location.hostname,
+                'Port': window.location.port || '(default)',
+                'WebSocket Support': 'WebSocket' in window ? 'Yes' : 'No',
+                'WebSocket State': ws ? ['Connecting', 'Open', 'Closing', 'Closed'][ws.readyState] : 'Not initialized',
+                'User Agent': navigator.userAgent
+            };
+            
+            connectionInfoEl.textContent = Object.entries(info)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join('\n');
+        }
+        
+        // Initialize WebSocket connection
+        function initWebSocket() {
+            try {
+                // Clear previous connection
+                if (ws) {
+                    ws.close();
+                }
+                
+                // Update status
+                statusEl.className = 'connecting';
+                statusEl.textContent = 'Connecting...';
+                
+                // Get the current protocol (http or https)
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const host = window.location.hostname || 'localhost';
+                
+                // Create WebSocket URL based on environment
+                let wsUrl;
+                if (window.location.hostname === 'localhost' || window.location.hostname.includes('192.168.')) {
+                    // For local development, include the port
+                    const port = window.location.port || '3000';
+                    wsUrl = `${protocol}//${host}:${port}`;
+                } else {
+                    // For Render.com deployment, don't specify port
+                    wsUrl = `${protocol}//${host}`;
+                }
+                
+                addMessage(`Attempting to connect to WebSocket at: ${wsUrl}`);
+                ws = new WebSocket(wsUrl);
+                
+                ws.onopen = function() {
+                    statusEl.className = 'connected';
+                    statusEl.textContent = 'Connected!';
+                    addMessage('Connection established successfully', 'success');
+                    updateConnectionInfo();
+                };
+                
+                ws.onmessage = function(event) {
+                    addMessage(`Received: ${event.data}`, 'received');
+                    try {
+                        const data = JSON.parse(event.data);
+                        console.log('Parsed data:', data);
+                    } catch (e) {
+                        console.error('Error parsing message:', e);
+                    }
+                };
+                
+                ws.onclose = function() {
+                    statusEl.className = 'error';
+                    statusEl.textContent = 'Disconnected';
+                    addMessage('Connection closed', 'error');
+                    updateConnectionInfo();
+                };
+                
+                ws.onerror = function(error) {
+                    statusEl.className = 'error';
+                    statusEl.textContent = 'Error';
+                    addMessage('WebSocket error occurred', 'error');
+                    console.error('WebSocket error:', error);
+                    updateConnectionInfo();
+                };
+            } catch (error) {
+                statusEl.className = 'error';
+                statusEl.textContent = 'Error';
+                addMessage(`Error: ${error.message}`, 'error');
+                console.error('Error:', error);
+                updateConnectionInfo();
+            }
+        }
+        
+        // Send a test message
+        function sendTestMessage() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const testMessage = {
+                    type: 'test',
+                    message: 'Hello Server!',
+                    timestamp: new Date().toISOString()
+                };
+                
+                const messageStr = JSON.stringify(testMessage);
+                ws.send(messageStr);
+                addMessage(`Sent: ${messageStr}`, 'sent');
+            } else {
+                addMessage('Cannot send message: WebSocket is not connected', 'error');
+            }
+        }
+        
+        // Event listeners
+        sendTestBtn.addEventListener('click', sendTestMessage);
+        reconnectBtn.addEventListener('click', initWebSocket);
+        
+        // Initialize
+        updateConnectionInfo();
+        initWebSocket();
+        
+        // Update connection info periodically
+        setInterval(updateConnectionInfo, 1000);
+    </script>
+</body>
+</html>
