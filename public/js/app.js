@@ -471,15 +471,23 @@ function tryLocalNetworkMode() {
         showAlert('Room deleted successfully!');
     }
     
-    // Load current room content
-    function loadCurrentRoom() {
-        if (!currentRoom) return;
-        
-        currentRoomName.textContent = currentRoom.name;
-        sharedTextArea.value = currentRoom.messages.map(msg => msg.text).join('\n');
-        updateLastPost();
-        updateCharacterCount();
+   // Load current room content
+function loadCurrentRoom() {
+    if (!currentRoom) return;
+    
+    currentRoomName.textContent = currentRoom.name;
+    
+    // Display only the latest message text
+    if (currentRoom.messages && currentRoom.messages.length > 0) {
+        sharedTextArea.value = currentRoom.messages[currentRoom.messages.length - 1].text;
+    } else {
+        sharedTextArea.value = '';
     }
+    
+    updateLastPost();
+    updateCharacterCount();
+}
+
     
     // Update last post information
     function updateLastPost() {
