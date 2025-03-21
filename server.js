@@ -135,6 +135,30 @@ app.delete('/api/rooms/:id', (req, res) => {
     }
 });
 
+// Add these helper functions at server.js file
+function loadRoomsData() {
+    try {
+        if (fs.existsSync(DATA_FILE)) {
+            const data = fs.readFileSync(DATA_FILE, 'utf8');
+            return JSON.parse(data);
+        } else {
+            return [{ id: 'default', name: 'Default Room', messages: [] }];
+        }
+    } catch (error) {
+        console.error('Error loading rooms data:', error);
+        return [{ id: 'default', name: 'Default Room', messages: [] }];
+    }
+}
+
+function saveRoomsData(data) {
+    try {
+        fs.writeFileSync(DATA_FILE, JSON.stringify(data));
+        return true;
+    } catch (error) {
+        console.error('Error saving rooms data:', error);
+        return false;
+    }
+}
 
 // Start server
 const PORT = process.env.PORT || 3000;
