@@ -144,6 +144,80 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Initialize connection to server
+    // Initialize connection to server
+function initConnection() {
+    try {
+        // Get the current protocol (http or https)
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.hostname || 'localhost';
+        
+        // Create WebSocket URL based on environment
+        let wsUrl;
+        if (window.location.hostname === 'localhost' || window.location.hostname.includes('192.168.')) {
+            // For local development, include the port
+            const port = window.location.port || '3000';
+            wsUrl = `${protocol}//${host}:${port}`;
+        } else {
+            // For Render.com deployment, don't specify port
+            wsUrl = `${protocol}//${host}`;
+        }
+        
+        console.log('Attempting to connect to WebSocket at:', wsUrl);
+        ws = new WebSocket(wsUrl);
+        
+        ws.onopen = function() {
+            console.log('Connected to server successfully');
+            updateConnectionStatus('online');
+            
+            // Request initial data
+            fetchRoomsFromServer();
+        };
+        
+        ws.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'init' || data.type === 'update') {
+                    // Update rooms with server data
+                    rooms = data.data;
+                    
+                    // Update localStorage for offline fallback
+                    localStorage.setItem('rooms', JSON.stringify(rooms));
+                    
+                    // Update current room reference
+                    if (currentRoom) {
+                        currentRoom = rooms.find(room => room.id === currentRoom.id) || rooms[0];
+                    } else {
+                        currentRoom = rooms[0];
+                    }
+                    
+                    // Update UI
+                    renderRooms();
+                    loadCurrentRoom();
+                }
+            } catch (error) {
+                console.error('Error processing message:', error);
+            }
+        };
+        
+        ws.onclose = function() {
+            console.log('Disconnected from server');
+            updateConnectionStatus('offline');
+            
+            // Try to reconnect after a delay
+            setTimeout(initConnection, 5000);
+        };
+        
+        ws.onerror = function(error) {
+            console.error('WebSocket error:', error);
+            updateConnectionStatus('offline');
+        };
+    } catch (error) {
+        console.error('Connection error:', error);
+        updateConnectionStatus('offline');
+    }
+}
+
     // Add this function to implement polling as a fallback
 function setupPolling() {
     console.log('Setting up polling as fallback');
