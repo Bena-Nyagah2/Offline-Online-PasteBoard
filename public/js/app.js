@@ -532,7 +532,7 @@ function loadCurrentRoom() {
         }
     }
     
-   // Save message to current room
+// Save message to current room
 function saveMessage() {
     if (!currentRoom) return;
     
@@ -547,34 +547,18 @@ function saveMessage() {
     // Save username
     localStorage.setItem('username', username);
     
-    // Replace the current room's messages with a single new message
-    // instead of appending to the existing messages
-    currentRoom.messages = [{
+    // Add message to current room
+    const message = {
         username,
         text,
         timestamp: new Date().toISOString()
-    }];
+    };
+    
+    currentRoom.messages.push(message);
     
     updateLastPost();
     saveAppState();
     showAlert('Message saved successfully!');
-}
-
-        
-        // Save username
-        localStorage.setItem('username', username);
-        
-        // Add message to current room
-        const message = {
-            username,
-            text,
-            timestamp: new Date().toISOString()
-        };
-        
-        currentRoom.messages.push(message);
-        updateLastPost();
-        saveAppState();
-        showAlert('Message saved successfully!');
 }    
     
     // Refresh the current room content
