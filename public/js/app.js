@@ -522,17 +522,34 @@ function tryLocalNetworkMode() {
         }
     }
     
-    // Save message to current room
-    function saveMessage() {
-        if (!currentRoom) return;
-        
-        const username = usernameInput.value.trim() || 'Anonymous';
-        const text = sharedTextArea.value.trim();
-        
-        if (!text) {
-            showAlert('Please enter a message to save.');
-            return;
-        }
+   // Save message to current room
+function saveMessage() {
+    if (!currentRoom) return;
+    
+    const username = usernameInput.value.trim() || 'Anonymous';
+    const text = sharedTextArea.value.trim();
+    
+    if (!text) {
+        showAlert('Please enter a message to save.');
+        return;
+    }
+    
+    // Save username
+    localStorage.setItem('username', username);
+    
+    // Replace the current room's messages with a single new message
+    // instead of appending to the existing messages
+    currentRoom.messages = [{
+        username,
+        text,
+        timestamp: new Date().toISOString()
+    }];
+    
+    updateLastPost();
+    saveAppState();
+    showAlert('Message saved successfully!');
+}
+
         
         // Save username
         localStorage.setItem('username', username);
