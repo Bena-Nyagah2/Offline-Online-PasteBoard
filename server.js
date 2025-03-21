@@ -75,6 +75,71 @@ wss.on('connection', (ws) => {
     });
 });
 
+// Add these endpoints to your server.js file
+
+// Get all rooms
+app.get('/api/rooms', (req, res) => {
+    try {
+        const roomsData = loadRoomsData();
+        res.json(roomsData);
+    } catch (error) {
+        console.error('Error fetching rooms:', error);
+        res.status(500).json({ error: 'Failed to fetch rooms' });
+    }
+});
+
+// Create a new room
+app.post('/api/rooms', express.json(), (req, res) => {
+    try {
+        const roomsData = loadRoomsData();
+        roomsData.push(req.body);
+        saveRoomsData(roomsData);
+        res.status(201).json(req.body);
+    } catch (error) {
+        console.error('Error creating room:', error);
+        res.status(500).json({ error: 'Failed to create room' });
+    }
+});
+
+// Update a room
+app.put('/api/rooms/:id', express.json(), (req, res) => {
+    try {
+        const roomsData = loadRoomsData();
+        const roomIndex = roomsData.findIndex(room => room.id === req.params.id);
+        
+        if (roomIndex !== -1) {
+            roomsData[roomIndex] = req.body;
+            saveRoomsData(roomsData);
+            res.json(req.body);
+        } else {
+            res.status(404).json({ error: 'Room not found' });
+        }
+    } catch (error) {
+        console.error('Error updating room:', error);
+        res.status(500).json({ error: 'Failed to update room' });
+    }
+});
+
+// Delete a room
+app.delete('/api/rooms/:id', (req, res) => {
+    try {
+        const roomsData = loadRoomsData();
+        const roomIndex = roomsData.findIndex(room => room.id === req.params.id);
+        
+        if (roomIndex !== -1) {
+            roomsData.splice(roomIndex, 1);
+            saveRoomsData(roomsData);
+            res.json({ message: 'Room deleted successfully' });
+        } else {
+            res.status(404).json({ error: 'Room not found' });
+        }
+    } catch (error) {
+        console.error('Error deleting room:', error);
+        res.status(500).json({ error: 'Failed to delete room' });
+    }
+});
+
+
 // Start server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
