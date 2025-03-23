@@ -122,6 +122,9 @@ The server will start on port `3000` by default. You can change this by setting 
 #### Refreshing Content:
 - Click the **"Refresh"** button to fetch the latest messages from the server
 
+#### Replacing Content:
+- Click the **"Replace"** button to replace the messages in the text box with the newly pasted text
+
 ### Message Logs
 
 #### Viewing Logs:
