@@ -1,6 +1,6 @@
 # Offline-Online-PasteBoard
 
-Shared Text Rooms is a real-time collaborative messaging application that allows users to create rooms, share text messages, and communicate with others. The application is designed to work in various connectivity scenarios:
+Shared Text Rooms is a real-time collaborative messaging application that allows users to create rooms, share text messages, and communicate with others. It's initial purpose was to create an easier method to copy and paste text from one device to another. The application is designed to work in various connectivity scenarios:
 
 - **Online Mode:** Full real-time synchronization across all connected devices
 - **Local Network Mode:** Communication between devices on the same network
